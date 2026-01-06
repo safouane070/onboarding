@@ -1,3 +1,27 @@
+<?php
+session_start();
+require 'db.php';
+
+$userId = $_SESSION['user_id'];
+
+$stmt = $pdo->prepare("
+    SELECT ci.id, ci.title,
+           IF(cp.completed IS NULL, 0, cp.completed) AS completed
+    FROM checklist_items ci
+    JOIN checklist_assignments ca ON ca.checklist_id = ci.checklist_id
+    LEFT JOIN checklist_progress cp ON cp.checklist_item_id = ci.id AND cp.user_id = ?
+    WHERE ca.user_id = ?
+");
+$stmt->execute([$userId, $userId]);
+$items = $stmt->fetchAll();
+
+// Bereken voortgang
+$total = count($items);
+$done = array_sum(array_column($items,'completed'));
+$percent = $total ? round($done/$total*100) : 0;
+?>
+
+
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -70,54 +94,16 @@
                 </div>
             </div>
 
-            <div class="checklist-section">
-
-                <h1 class="title">Onboarding Checklist</h1>
-                <p class="subtitle">Voltooi de volgende stappen om je account in te stellen.</p>
-
-                <div class="checklist">
-
+            <div class="checklist">
+                <?php foreach($items as $item): ?>
                     <div class="checklist-item">
                         <div class="left">
                             <div class="circle"></div>
-                            <span>Bevestig je e-mailadres</span>
+                            <span><?= ($item['title']) ?></span>
                         </div>
-                        <button class="btn">Bekijk details</button>
+                        <button class="btn" >Bekijk details</button>
                     </div>
-
-                    <div class="checklist-item">
-                        <div class="left">
-                            <div class="circle"></div>
-                            <span>Stel je profiel in</span>
-                        </div>
-                        <button class="btn">Bekijk details</button>
-                    </div>
-
-                    <div class="checklist-item">
-                        <div class="left">
-                            <div class="circle"></div>
-                            <span>Voltooi de welkomsttour</span>
-                        </div>
-                        <button class="btn">Bekijk details</button>
-                    </div>
-
-                    <div class="checklist-item">
-                        <div class="left">
-                            <div class="circle"></div>
-                            <span>Nodig een teamlid uit</span>
-                        </div>
-                        <button class="btn">Bekijk details</button>
-                    </div>
-
-                    <div class="checklist-item">
-                        <div class="left">
-                            <div class="circle"></div>
-                            <span>Maak je eerste project aan</span>
-                        </div>
-                        <button class="btn">Bekijk details</button>
-                    </div>
-
-                </div>
+                <?php endforeach; ?>
             </div>
 
         </div>
