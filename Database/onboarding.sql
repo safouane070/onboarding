@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Gegenereerd op: 06 jan 2026 om 11:37
--- Serverversie: 10.4.32-MariaDB
--- PHP-versie: 8.1.25
+-- Generation Time: Jan 09, 2026 at 01:37 PM
+-- Server version: 10.4.32-MariaDB
+-- PHP Version: 8.2.12
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -26,7 +26,7 @@ USE `onboarding`;
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `checklists`
+-- Table structure for table `checklists`
 --
 
 CREATE TABLE `checklists` (
@@ -36,7 +36,7 @@ CREATE TABLE `checklists` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `checklists`
+-- Dumping data for table `checklists`
 --
 
 INSERT INTO `checklists` (`id`, `title`, `description`) VALUES
@@ -49,7 +49,7 @@ INSERT INTO `checklists` (`id`, `title`, `description`) VALUES
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `checklist_assignments`
+-- Table structure for table `checklist_assignments`
 --
 
 CREATE TABLE `checklist_assignments` (
@@ -58,16 +58,16 @@ CREATE TABLE `checklist_assignments` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `checklist_assignments`
+-- Dumping data for table `checklist_assignments`
 --
 
 INSERT INTO `checklist_assignments` (`user_id`, `checklist_id`) VALUES
-(5, 1);
+(7, 1);
 
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `checklist_items`
+-- Table structure for table `checklist_items`
 --
 
 CREATE TABLE `checklist_items` (
@@ -78,7 +78,7 @@ CREATE TABLE `checklist_items` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `checklist_items`
+-- Dumping data for table `checklist_items`
 --
 
 INSERT INTO `checklist_items` (`id`, `checklist_id`, `title`, `sort_order`) VALUES
@@ -107,7 +107,7 @@ INSERT INTO `checklist_items` (`id`, `checklist_id`, `title`, `sort_order`) VALU
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `checklist_progress`
+-- Table structure for table `checklist_progress`
 --
 
 CREATE TABLE `checklist_progress` (
@@ -119,89 +119,94 @@ CREATE TABLE `checklist_progress` (
 -- --------------------------------------------------------
 
 --
--- Tabelstructuur voor tabel `users`
+-- Table structure for table `users`
 --
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
   `username` varchar(100) DEFAULT NULL,
+  `email` varchar(255) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
-  `role` enum('user','admin') DEFAULT 'user'
+  `role` enum('user','admin') DEFAULT 'user',
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 --
--- Gegevens worden geëxporteerd voor tabel `users`
+-- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `role`) VALUES
-(1, 'Amr', '123', 'user'),
-(4, 'admin', '1234', 'admin'),
-(5, 'amro', '$2y$10$qxDL2TZIBKD.Hm34cchHkeum1/NaoghEXk15aq7aCJwG1Kwd1e.sq', 'user');
+INSERT INTO `users` (`id`, `username`, `email`, `password`, `role`, `created_at`) VALUES
+(1, 'Amr', NULL, '123', 'user', '2026-01-09 10:24:02'),
+(4, 'admin', NULL, '1234', 'admin', '2026-01-09 10:24:02'),
+(5, 'amro', NULL, '$2y$10$qxDL2TZIBKD.Hm34cchHkeum1/NaoghEXk15aq7aCJwG1Kwd1e.sq', 'user', '2026-01-09 10:24:02'),
+(6, 'Chahid', 'chahid20juni@gmail.com', '$2y$10$8ZTJf6u2.ushiCBvG1qQvOC57VpYdaV7QacGKyosTACAM3ukHW91O', 'user', '2026-01-09 10:25:14'),
+(7, 'sdwqd', '595908@edu.rocmn.nl', '$2y$10$f1KJRT8rUxIDRWUQJOWOgu9eykppAfbB/ejQQKiUL2oWx1HCCP4ea', 'user', '2026-01-09 10:29:38');
 
 --
--- Indexen voor geëxporteerde tabellen
+-- Indexes for dumped tables
 --
 
 --
--- Indexen voor tabel `checklists`
+-- Indexes for table `checklists`
 --
 ALTER TABLE `checklists`
   ADD PRIMARY KEY (`id`);
 
 --
--- Indexen voor tabel `checklist_assignments`
+-- Indexes for table `checklist_assignments`
 --
 ALTER TABLE `checklist_assignments`
   ADD PRIMARY KEY (`user_id`,`checklist_id`);
 
 --
--- Indexen voor tabel `checklist_items`
+-- Indexes for table `checklist_items`
 --
 ALTER TABLE `checklist_items`
   ADD PRIMARY KEY (`id`),
   ADD KEY `checklist_id` (`checklist_id`);
 
 --
--- Indexen voor tabel `checklist_progress`
+-- Indexes for table `checklist_progress`
 --
 ALTER TABLE `checklist_progress`
   ADD PRIMARY KEY (`user_id`,`checklist_item_id`);
 
 --
--- Indexen voor tabel `users`
+-- Indexes for table `users`
 --
 ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
-  ADD UNIQUE KEY `username` (`username`);
+  ADD UNIQUE KEY `username` (`username`),
+  ADD UNIQUE KEY `email` (`email`);
 
 --
--- AUTO_INCREMENT voor geëxporteerde tabellen
+-- AUTO_INCREMENT for dumped tables
 --
 
 --
--- AUTO_INCREMENT voor een tabel `checklists`
+-- AUTO_INCREMENT for table `checklists`
 --
 ALTER TABLE `checklists`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
 
 --
--- AUTO_INCREMENT voor een tabel `checklist_items`
+-- AUTO_INCREMENT for table `checklist_items`
 --
 ALTER TABLE `checklist_items`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=22;
 
 --
--- AUTO_INCREMENT voor een tabel `users`
+-- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
--- Beperkingen voor geëxporteerde tabellen
+-- Constraints for dumped tables
 --
 
 --
--- Beperkingen voor tabel `checklist_items`
+-- Constraints for table `checklist_items`
 --
 ALTER TABLE `checklist_items`
   ADD CONSTRAINT `checklist_items_ibfk_1` FOREIGN KEY (`checklist_id`) REFERENCES `checklists` (`id`);
