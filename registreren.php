@@ -1,3 +1,60 @@
+<?php
+session_start();
+require_once 'db.php';
+
+$errors = [];
+$success = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $password = $_POST['password'] ?? '';
+    $confirm_password = $_POST['confirm-password'] ?? '';
+
+    // Validate input
+    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
+        $errors[] = "Alle velden zijn verplicht.";
+    }
+
+    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $errors[] = "Ongeldig e-mailadres.";
+    }
+
+    if ($password !== $confirm_password) {
+        $errors[] = "Wachtwoorden komen niet overeen.";
+    }
+
+    if (strlen($password) < 8) {
+        $errors[] = "Wachtwoord moet minimaal 8 karakters lang zijn.";
+    }
+
+    if (empty($errors)) {
+        try {
+            // Check if username or email already exists
+            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
+            $stmt->execute([$username, $email]);
+
+            if ($stmt->rowCount() > 0) {
+                $errors[] = "Gebruikersnaam of e-mailadres is al in gebruik.";
+            } else {
+                // Hash password and insert new user
+                $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+                $stmt = $pdo->prepare("INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, NOW())");
+
+                if ($stmt->execute([$username, $email, $hashed_password])) {
+                    $success = "Registratie succesvol! U kunt nu inloggen.";
+                    // Clear form
+                    $username = $email = '';
+                } else {
+                    $errors[] = "Er is een fout opgetreden. Probeer het later opnieuw.";
+                }
+            }
+        } catch (PDOException $e) {
+            $errors[] = "Databasefout: " . $e->getMessage();
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -16,14 +73,28 @@
   <main>
     <div class="login-box">
       <h1>Account Aanmaken</h1>
-      <form>
+      <?php if (!empty($errors)): ?>
+        <div class="error-message">
+          <?php foreach ($errors as $error): ?>
+            <p><?php echo htmlspecialchars($error); ?></p>
+          <?php endforeach; ?>
+        </div>
+      <?php endif; ?>
+
+      <?php if ($success): ?>
+        <div class="success-message">
+          <p><?php echo htmlspecialchars($success); ?></p>
+        </div>
+      <?php endif; ?>
+
+      <form method="POST" action="" novalidate>
         <div class="form-group">
           <label for="username">Gebruikersnaam:</label>
-          <input id="username" name="username" type="text" required/>
+          <input id="username" name="username" type="text" value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" required/>
         </div>
         <div class="form-group">
           <label for="email">E-mail:</label>
-          <input id="email" name="email" type="email" required/>
+          <input id="email" name="email" type="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required/>
         </div>
         <div class="form-group">
           <label for="password">Wachtwoord:</label>

@@ -1,3 +1,52 @@
+<?php
+session_start();
+
+// If user is already logged in, redirect to dashboard
+if (isset($_SESSION['user_id'])) {
+    header('Location: dashboard.php');
+    exit();
+}
+
+require_once 'db.php';
+
+$error = '';
+$username = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = trim($_POST['username'] ?? '');
+    $password = $_POST['password'] ?? '';
+
+    if (empty($username) || empty($password)) {
+        $error = 'Vul zowel gebruikersnaal als wachtwoord in.';
+    } else {
+        try {
+            // Check if user exists
+            $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ? OR email = ?");
+            $stmt->execute([$username, $username]);
+            $user = $stmt->fetch();
+
+            if ($user && password_verify($password, $user['password'])) {
+                // Password is correct, start session
+                $_SESSION['user_id'] = $user['id'];
+                $_SESSION['username'] = $user['username'];
+                $_SESSION['role'] = $user['role'];
+
+                // Regenerate session ID to prevent session fixation
+                session_regenerate_id(true);
+
+                // Redirect to onboarding
+                header('Location: onboarding.php');
+                exit();
+            } else {
+                $error = 'Ongeldige gebruikersnaam of wachtwoord.';
+            }
+        } catch (PDOException $e) {
+            $error = 'Er is een fout opgetreden. Probeer het later opnieuw.';
+            // For debugging: $error = 'Databasefout: ' . $e->getMessage();
+        }
+    }
+}
+?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -16,10 +65,16 @@
   <main>
     <div class="login-box">
       <h1>Inloggen</h1>
-      <form>
+      <?php if ($error): ?>
+        <div class="error-message">
+          <p><?php echo htmlspecialchars($error); ?></p>
+        </div>
+      <?php endif; ?>
+
+      <form method="POST" action="" novalidate>
         <div class="form-group">
           <label for="username">Gebruikersnaam:</label>
-          <input id="username" name="username" type="text" required/>
+          <input id="username" name="username" type="text" value="<?php echo htmlspecialchars($username); ?>" required autofocus/>
         </div>
         <div class="form-group">
           <label for="password">Wachtwoord:</label>
