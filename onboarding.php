@@ -51,7 +51,8 @@ $percent = $total ? round($done/$total*100) : 0;
             </div>
 
             <div class="nav-right desktop-only">
-                <span class="welcome">Welkom terug!</span>
+                <span class="welcome">Welkom, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Gebruiker'); ?>!</span>
+                <a href="logout.php" class="logout-btn">Uitloggen</a>
             </div>
 
             <!-- Hamburger -->
@@ -63,8 +64,9 @@ $percent = $total ? round($done/$total*100) : 0;
 
         <!-- Mobile dropdown -->
         <div class="mobile-menu" id="mobileMenu">
-            <a href="onboarding.php">onboarding</a>
-            <a href="toewijzen.php">toewijzen<a>
+            <a href="onboarding.php">Onboarding</a>
+            <a href="toewijzen.php">Toewijzen</a>
+            <a href="logout.php" class="mobile-logout">Uitloggen</a>
         </div>
     </header>
 
