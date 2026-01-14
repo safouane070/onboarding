@@ -111,3 +111,69 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 });
+
+
+document.addEventListener("DOMContentLoaded", () => {
+
+    // ===== Mobile menu =====
+    const hamburger = document.getElementById("hamburger");
+    const mobileMenu = document.getElementById("mobileMenu");
+
+    if (hamburger && mobileMenu) {
+        hamburger.addEventListener("click", () => {
+            mobileMenu.classList.toggle("open");
+        });
+    }
+
+    // ===== User search =====
+    const searchInput = document.getElementById("userSearch");
+    const users = document.querySelectorAll(".user");
+
+    searchInput.addEventListener("input", () => {
+        const q = searchInput.value.toLowerCase();
+
+        users.forEach(user => {
+            const name = user.querySelector(".user-name").textContent;
+            const email = user.querySelector(".user-email").textContent;
+            user.style.display =
+                (name + email).toLowerCase().includes(q) ? "flex" : "none";
+        });
+    });
+
+    // ===== Selected counter =====
+    const checkboxes = document.querySelectorAll(".user input[type='checkbox']");
+    const counter = document.getElementById("selectedCount");
+
+    function updateCounter() {
+        const count = [...checkboxes].filter(c => c.checked).length;
+        counter.textContent = `${count} gebruiker${count !== 1 ? "s" : ""} geselecteerd`;
+    }
+
+    checkboxes.forEach(cb => cb.addEventListener("change", updateCounter));
+    updateCounter();
+
+    // ===== Limit visible users (no scroll) =====
+    const MAX_VISIBLE = 6;
+
+    function limitUsers() {
+        let shown = 0;
+        users.forEach(user => {
+            if (shown < MAX_VISIBLE) {
+                user.style.display = "flex";
+                shown++;
+            } else {
+                user.style.display = "none";
+            }
+        });
+    }
+
+    limitUsers();
+});
+
+
+
+
+
+
+
+
