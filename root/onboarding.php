@@ -1,6 +1,6 @@
 <?php
 session_start();
-require 'db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 $userId = $_SESSION['user_id'];
 
@@ -29,7 +29,7 @@ $percent = $total ? round($done/$total*100) : 0;
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Onboarding Dashboard</title>
 
-    <link rel="stylesheet" href="onboarding.css" />
+    <link rel="stylesheet" href="../assets/css/onboarding.css" />
 </head>
 
 <body>
@@ -52,7 +52,7 @@ $percent = $total ? round($done/$total*100) : 0;
 
             <div class="nav-right desktop-only">
                 <span class="welcome">Welkom, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Gebruiker'); ?>!</span>
-                <a href="logout.php" class="logout-btn">Uitloggen</a>
+                <a href="../auth/logout.php" class="logout-btn">Uitloggen</a>
             </div>
 
             <!-- Hamburger -->
@@ -66,7 +66,7 @@ $percent = $total ? round($done/$total*100) : 0;
         <div class="mobile-menu" id="mobileMenu">
             <a href="onboarding.php">Onboarding</a>
             <a href="toewijzen.php">Toewijzen</a>
-            <a href="logout.php" class="mobile-logout">Uitloggen</a>
+            <a href="../auth/logout.php" class="mobile-logout">Uitloggen</a>
         </div>
     </header>
 
@@ -115,11 +115,11 @@ $percent = $total ? round($done/$total*100) : 0;
     <!-- FOOTER -->
     <!-- ========================= -->
     <footer class="footer">
-        <p>© Technolab Leiden | Onboarding - Safouane</p>
+        <p> Technolab Leiden | Onboarding - Safouane</p>
     </footer>
 
 </div>
 
-<script src="onboarding.js"></script>
+<script src="../assets/js/onboarding.js"></script>
 </body>
 </html>

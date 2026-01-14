@@ -1,5 +1,5 @@
 <?php
-require_once 'db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 try {
     // Check if email column exists
@@ -49,6 +49,6 @@ try {
     // Re-run the update to show the output
     require_once 'update_database_output.php';
     ?></pre>
-    <p><a href="login.php">Go to Login Page</a></p>
+    <p><a href="../auth/login.php">Go to Login Page</a></p>
 </body>
 </html>

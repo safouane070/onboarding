@@ -1,12 +1,12 @@
 <?php
-require 'db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 
 /* Alle users voor dropdown */
 $users = $pdo->query("
-    SELECT id, username, email 
-    FROM users 
+    SELECT id, username, email
+    FROM users
     ORDER BY username
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -27,7 +27,7 @@ if ($userId) {
 
     if ($checklist) {
         $stmt = $pdo->prepare("
-            SELECT 
+            SELECT
                 ci.id,
                 ci.title,
                 ci.sort_order,
@@ -49,7 +49,7 @@ if ($userId) {
 <head>
     <meta charset="UTF-8">
     <title>Checklist beheren</title>
-    <link rel="stylesheet" href="checklist.css">
+    <link rel="stylesheet" href="../assets/css/checklist.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
 <body class="page">
@@ -71,7 +71,7 @@ if ($userId) {
         </div>
 
         <div class="nav-right">
-            <div class="avatar small photo" style="background-image: url('avatar.png');"></div>
+            <div class="avatar small photo" style="background-image: none;"></div>
         </div>
     </div>
 
@@ -175,7 +175,7 @@ if ($userId) {
 </main>
 </div>
 
-<script src="checklist.js"></script>
-<script src="menu.js"></script>
+<script src="../assets/js/checklist.js"></script>
+<script src="../assets/js/menu.js"></script>
 </body>
 </html>
