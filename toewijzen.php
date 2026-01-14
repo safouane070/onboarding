@@ -1,40 +1,72 @@
+<?php
+// ================= DB CONNECTIE =================
+$host = "127.0.0.1";
+$db   = "onboarding";
+$user = "root";
+$pass = "";
+$charset = "utf8mb4";
+
+$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+$options = [
+    PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
+    PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
+];
+
+try {
+    $pdo = new PDO($dsn, $user, $pass, $options);
+} catch (Exception $e) {
+    die("Databaseverbinding mislukt");
+}
+
+// ================= FORM VERWERKEN =================
+$success = false;
+
+if ($_SERVER["REQUEST_METHOD"] === "POST") {
+    $checklist_id = (int)($_POST["checklist_id"] ?? 0);
+    $users = $_POST["users"] ?? [];
+
+    if ($checklist_id && !empty($users)) {
+        $stmt = $pdo->prepare("
+            INSERT IGNORE INTO checklist_assignments (user_id, checklist_id)
+            VALUES (:user_id, :checklist_id)
+        ");
+
+        foreach ($users as $user_id) {
+            $stmt->execute([
+                "user_id" => (int)$user_id,
+                "checklist_id" => $checklist_id
+            ]);
+        }
+        $success = true;
+    }
+}
+
+// ================= DATA OPHALEN =================
+$checklists = $pdo->query("SELECT id, title FROM checklists ORDER BY title")->fetchAll();
+$users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")->fetchAll();
+?>
 <!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Afvinklijst Toewijzen</title>
     <link rel="stylesheet" href="toewijzen.css">
 </head>
-
 <body>
 
 <header class="header">
     <nav class="nav">
-
-        <!-- LEFT: LOGO -->
         <div class="nav-left">
-            <svg viewBox="0 0 48 48" width="34">
-                <path d="M13.8261 30.5736C16.7203 29.8826 20.2244 29.4783 24 29.4783C27.7756 29.4783 31.2797 29.8826 34.1739 30.5736C36.9144 31.2278 39.9967 32.7669 41.3563 33.8352L24.8486 7.36089C24.4571 6.73303 23.5429 6.73303 23.1514 7.36089L6.64374 33.8352C8.00331 32.7669 11.0856 31.2278 13.8261 30.5736Z"/>
-            </svg>
             <h1 class="brand">Technolab Leiden</h1>
         </div>
-
-        <!-- RIGHT (desktop) -->
         <div class="nav-right desktop-only">
             <div class="avatar"></div>
         </div>
-
-        <!-- HAMBURGER -->
         <div class="hamburger" id="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
+            <span></span><span></span><span></span>
         </div>
-
     </nav>
 
-    <!-- MOBILE MENU -->
     <div class="mobile-menu" id="mobileMenu">
         <a href="#">Meldingen</a>
         <a href="#">Help</a>
@@ -43,87 +75,63 @@
 </header>
 
 <main class="container">
-
     <h2 class="title">Afvinklijst Toewijzen</h2>
 
-    <div class="columns">
+    <?php if ($success): ?>
+        <p style="color:green;font-weight:700;">✔ Checklist succesvol toegewezen</p>
+    <?php endif; ?>
 
-        <!-- LIST SELECT -->
-        <section class="card">
-            <h3>Kies een Afvinklijst</h3>
+    <form method="post">
+        <div class="columns">
 
-            <label class="full">
-                <p class="label">Selecteer een lijst</p>
+            <!-- CHECKLIST -->
+            <section class="card">
+                <h3>Kies een Afvinklijst</h3>
+                <label class="full">
+                    <p class="label">Selecteer een lijst</p>
+                    <div class="select-wrap">
+                        <select name="checklist_id" required>
+                            <option value="">-- Kies een checklist --</option>
+                            <?php foreach ($checklists as $c): ?>
+                                <option value="<?= $c["id"] ?>">
+                                    <?= htmlspecialchars($c["title"]) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                </label>
+            </section>
 
-                <div class="select-wrap">
-                    <select>
-                        <option selected>Veiligheidsprocedures Lab 1</option>
-                        <option>Introductie 3D Printen</option>
-                        <option>Onderhoud Lasersnijder</option>
-                        <option>Basiselektronica Workshop</option>
-                    </select>
+            <!-- USERS -->
+            <section class="card">
+                <h3>Selecteer Gebruikers</h3>
+
+                <div class="search">
+                    <input type="text" id="userSearch" placeholder="Zoek op naam of e-mail...">
                 </div>
-            </label>
 
-            <div class="card-info">
-                <div class="icon">i</div>
-                <div>
-                    <p class="info-title">Geselecteerde lijst</p>
-                    <p class="info-value">Veiligheidsprocedures Lab 1</p>
-                    <p class="info-text">Deze lijst bevat alle veiligheidscontroles voor laboratorium 1.</p>
+                <p class="select-info" id="selectedCount">0 gebruikers geselecteerd</p>
+
+                <div class="user-list" id="userList">
+                    <?php foreach ($users as $u): ?>
+                        <label class="user">
+                            <input type="checkbox" name="users[]" value="<?= $u["id"] ?>">
+                            <div class="avatar small"></div>
+                            <div>
+                                <p class="user-name"><?= htmlspecialchars($u["username"]) ?></p>
+                                <p class="user-email"><?= htmlspecialchars($u["email"] ?? "") ?></p>
+                            </div>
+                        </label>
+                    <?php endforeach; ?>
                 </div>
-            </div>
-        </section>
+            </section>
 
-        <!-- USER SELECT -->
-        <section class="card">
-            <h3>Selecteer Gebruikers</h3>
+        </div>
 
-            <div class="search">
-                <input type="text" placeholder="Zoek op naam of e-mail...">
-            </div>
-
-            <p class="select-info">3 gebruikers geselecteerd</p>
-
-            <div class="user-list">
-
-                <label class="user">
-                    <input type="checkbox" checked>
-                    <div class="avatar small"></div>
-                    <div>
-                        <p class="user-name">Janneke de Vries</p>
-                        <p class="user-email">janneke@example.com</p>
-                    </div>
-                </label>
-
-                <label class="user">
-                    <input type="checkbox">
-                    <div class="avatar small"></div>
-                    <div>
-                        <p class="user-name">Pieter Janssen</p>
-                        <p class="user-email">pieter@example.com</p>
-                    </div>
-                </label>
-
-                <label class="user">
-                    <input type="checkbox" checked>
-                    <div class="avatar small"></div>
-                    <div>
-                        <p class="user-name">Fatima el Amrani</p>
-                        <p class="user-email">fatima@example.com</p>
-                    </div>
-                </label>
-
-            </div>
-
-        </section>
-
-    </div>
-
-    <div class="bottom">
-        <button class="assign-btn">Toewijzen ➜</button>
-    </div>
-
+        <div class="bottom">
+            <button class="assign-btn" type="submit">Toewijzen ➜</button>
+        </div>
+    </form>
 </main>
 
 <script src="toewijzen.js"></script>
