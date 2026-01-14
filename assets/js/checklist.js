@@ -41,7 +41,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const title = prompt('Nieuwe taak:');
             if (!title) return;
 
-            await fetch('taskcreate.php', {
+            await fetch('../api/task_create.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ checklist_id: checklistId, title })
@@ -60,7 +60,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (e.target.closest('.delete')) {
             if (!confirm('Weet je zeker dat je deze taak wilt verwijderen?')) return;
 
-            await fetch('taskdelete.php', {
+            await fetch('../api/task_delete.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id: taskId })
@@ -74,7 +74,7 @@ document.addEventListener('DOMContentLoaded', () => {
             const newTitle = prompt('Taak aanpassen:', p.innerText);
             if (!newTitle) return;
 
-            await fetch('taskupdate.php', {
+            await fetch('../api/task_update.php', {
                 method: 'POST',
                 headers: {'Content-Type': 'application/json'},
                 body: JSON.stringify({ id: taskId, title: newTitle })
@@ -91,7 +91,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const taskId = task.dataset.id;
         const completed = e.target.checked ? 1 : 0;
 
-        await fetch('tasktoggle.php', {
+        await fetch('../api/task_toggle.php', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({ user_id: userId, task_id: taskId, completed })

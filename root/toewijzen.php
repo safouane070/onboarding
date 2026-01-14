@@ -50,7 +50,7 @@ $users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")-
 <head>
     <meta charset="UTF-8">
     <title>Afvinklijst Toewijzen</title>
-    <link rel="stylesheet" href="toewijzen.css">
+    <link rel="stylesheet" href="../assets/css/toewijzen.css">
 </head>
 <body>
 
@@ -134,6 +134,6 @@ $users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")-
     </form>
 </main>
 
-<script src="toewijzen.js"></script>
+<script src="../assets/js/toewijzen.js"></script>
 </body>
 </html>

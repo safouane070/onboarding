@@ -1,5 +1,9 @@
 <?php
 ob_start();
+
+if (!isset($pdo)) {
+    require_once __DIR__ . '/../includes/db.php';
+}
 try {
     // Check if email column exists
     $stmt = $pdo->query("SHOW COLUMNS FROM users LIKE 'email'");
