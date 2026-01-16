@@ -6,13 +6,12 @@ $errors = [];
 $success = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
     $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
     $confirm_password = $_POST['confirm-password'] ?? '';
 
     // Validate input
-    if (empty($username) || empty($email) || empty($password) || empty($confirm_password)) {
+    if (empty($email) || empty($password) || empty($confirm_password)) {
         $errors[] = "Alle velden zijn verplicht.";
     }
 
@@ -30,21 +29,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (empty($errors)) {
         try {
-            // Check if username or email already exists
-            $stmt = $pdo->prepare("SELECT id FROM users WHERE username = ? OR email = ?");
-            $stmt->execute([$username, $email]);
+            // Check if email exists (must be pre-connected) and set password
+            $stmt = $pdo->prepare("SELECT id, password FROM users WHERE email = ?");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch();
 
-            if ($stmt->rowCount() > 0) {
-                $errors[] = "Gebruikersnaam of e-mailadres is al in gebruik.";
+            if (!$user) {
+                $errors[] = "Dit e-mailadres is niet gekoppeld. Neem contact op met een beheerder.";
+            } elseif (!empty($user['password'])) {
+                $errors[] = "Dit account is al geregistreerd. U kunt inloggen.";
             } else {
-                // Hash password and insert new user
                 $hashed_password = password_hash($password, PASSWORD_DEFAULT);
-                $stmt = $pdo->prepare("INSERT INTO users (username, email, password, created_at) VALUES (?, ?, ?, NOW())");
+                $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
 
-                if ($stmt->execute([$username, $email, $hashed_password])) {
+                if ($stmt->execute([$hashed_password, $user['id']])) {
                     $success = "Registratie succesvol! U kunt nu inloggen.";
                     // Clear form
-                    $username = $email = '';
+                    $email = '';
                 } else {
                     $errors[] = "Er is een fout opgetreden. Probeer het later opnieuw.";
                 }
@@ -88,10 +89,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
       <?php endif; ?>
 
       <form method="POST" action="" novalidate>
-        <div class="form-group">
-          <label for="username">Gebruikersnaam:</label>
-          <input id="username" name="username" type="text" value="<?php echo isset($username) ? htmlspecialchars($username) : ''; ?>" required/>
-        </div>
         <div class="form-group">
           <label for="email">E-mail:</label>
           <input id="email" name="email" type="email" value="<?php echo isset($email) ? htmlspecialchars($email) : ''; ?>" required/>

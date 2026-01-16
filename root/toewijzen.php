@@ -1,4 +1,16 @@
 <?php
+session_start();
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../auth/login.php');
+    exit();
+}
+
+if (($_SESSION['role'] ?? 'user') !== 'admin') {
+    header('Location: onboarding.php');
+    exit();
+}
+
 // ================= DB CONNECTIE =================
 $host = "127.0.0.1";
 $db   = "onboarding";
@@ -43,7 +55,7 @@ if ($_SERVER["REQUEST_METHOD"] === "POST") {
 
 // ================= DATA OPHALEN =================
 $checklists = $pdo->query("SELECT id, title FROM checklists ORDER BY title")->fetchAll();
-$users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")->fetchAll();
+$users = $pdo->query("SELECT id, username, email FROM users ORDER BY COALESCE(username, email)")->fetchAll();
 ?>
 <!DOCTYPE html>
 <html lang="nl">
@@ -51,28 +63,19 @@ $users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")-
     <meta charset="UTF-8">
     <title>Afvinklijst Toewijzen</title>
     <link rel="stylesheet" href="../assets/css/toewijzen.css">
+    <link rel="stylesheet" href="../assets/css/admin_nav.css">
 </head>
 <body>
 
-<header class="header">
-    <nav class="nav">
-        <div class="nav-left">
-            <h1 class="brand">Technolab Leiden</h1>
-        </div>
-        <div class="nav-right desktop-only">
-            <div class="avatar"></div>
-        </div>
-        <div class="hamburger" id="hamburger">
-            <span></span><span></span><span></span>
-        </div>
-    </nav>
-
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="#">Meldingen</a>
-        <a href="#">Help</a>
-        <a href="#">Profiel</a>
-    </div>
-</header>
+<nav class="admin-nav">
+    <span class="brand">Admin</span>
+    <a href="admin_hub.php">Hub</a>
+    <a href="connect_emails.php">E-mails koppelen</a>
+    <a href="toewijzen.php" class="current">Toewijzen</a>
+    <a href="checklist.php">Checklist</a>
+    <a href="onboarding.php">Onboarding</a>
+    <a href="../auth/logout.php">Uitloggen</a>
+</nav>
 
 <main class="container">
     <h2 class="title">Afvinklijst Toewijzen</h2>
@@ -118,7 +121,7 @@ $users = $pdo->query("SELECT id, username, email FROM users ORDER BY username")-
                             <input type="checkbox" name="users[]" value="<?= $u["id"] ?>">
                             <div class="avatar small"></div>
                             <div>
-                                <p class="user-name"><?= htmlspecialchars($u["username"]) ?></p>
+                                <p class="user-name"><?= htmlspecialchars($u["username"] ?: ($u["email"] ?? "")) ?></p>
                                 <p class="user-email"><?= htmlspecialchars($u["email"] ?? "") ?></p>
                             </div>
                         </label>
