@@ -52,6 +52,9 @@ $percent = $total ? round($done/$total*100) : 0;
 
             <div class="nav-right desktop-only">
                 <span class="welcome">Welkom, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Gebruiker'); ?>!</span>
+                <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
+                    <a href="connect_emails.php" class="logout-btn">E-mails koppelen</a>
+                <?php endif; ?>
                 <a href="../auth/logout.php" class="logout-btn">Uitloggen</a>
             </div>
 
@@ -66,6 +69,9 @@ $percent = $total ? round($done/$total*100) : 0;
         <div class="mobile-menu" id="mobileMenu">
             <a href="onboarding.php">Onboarding</a>
             <a href="toewijzen.php">Toewijzen</a>
+            <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
+                <a href="connect_emails.php">E-mails koppelen</a>
+            <?php endif; ?>
             <a href="../auth/logout.php" class="mobile-logout">Uitloggen</a>
         </div>
     </header>

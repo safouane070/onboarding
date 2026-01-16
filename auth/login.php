@@ -10,35 +10,71 @@ if (isset($_SESSION['user_id'])) {
 require_once __DIR__ . '/../includes/db.php';
 
 $error = '';
-$username = '';
+$email = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $username = trim($_POST['username'] ?? '');
+    $email = trim($_POST['email'] ?? '');
     $password = $_POST['password'] ?? '';
 
-    if (empty($username) || empty($password)) {
-        $error = 'Vul zowel gebruikersnaal als wachtwoord in.';
+    $isAdminIdentifier = strcasecmp($email, 'admin') === 0;
+
+    if (empty($email) || empty($password)) {
+        $error = 'Vul zowel e-mail als wachtwoord in.';
+    } elseif (!$isAdminIdentifier && !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = 'Ongeldig e-mailadres.';
     } else {
         try {
             // Check if user exists
-            $stmt = $pdo->prepare("SELECT id, username, password, role FROM users WHERE username = ? OR email = ?");
-            $stmt->execute([$username, $username]);
+            if ($isAdminIdentifier) {
+                $stmt = $pdo->prepare("SELECT id, username, email, password, role FROM users WHERE role = 'admin' ORDER BY id LIMIT 1");
+                $stmt->execute();
+            } else {
+                $stmt = $pdo->prepare("SELECT id, username, email, password, role FROM users WHERE email = ?");
+                $stmt->execute([$email]);
+            }
             $user = $stmt->fetch();
 
-            if ($user && password_verify($password, $user['password'])) {
-                // Password is correct, start session
-                $_SESSION['user_id'] = $user['id'];
-                $_SESSION['username'] = $user['username'];
-                $_SESSION['role'] = $user['role'];
-
-                // Regenerate session ID to prevent session fixation
-                session_regenerate_id(true);
-
-                // Redirect to onboarding
-                header('Location: ../root/onboarding.php');
-                exit();
+            if ($isAdminIdentifier && !$user) {
+                $error = 'Geen admin-account gevonden in de database.';
             } else {
-                $error = 'Ongeldige gebruikersnaam of wachtwoord.';
+
+                $passwordOk = false;
+                if ($user) {
+                    $storedPassword = (string)($user['password'] ?? '');
+                    $isHashed = str_starts_with($storedPassword, '$2y$') || str_starts_with($storedPassword, '$2a$') || str_starts_with($storedPassword, '$argon2');
+
+                    if ($isHashed) {
+                        $passwordOk = password_verify($password, $storedPassword);
+                    } else {
+                        $passwordOk = hash_equals($storedPassword, (string)$password);
+                        if ($passwordOk) {
+                            $rehash = password_hash($password, PASSWORD_DEFAULT);
+                            $rehashStmt = $pdo->prepare("UPDATE users SET password = ? WHERE id = ?");
+                            $rehashStmt->execute([$rehash, $user['id']]);
+                        }
+                    }
+                }
+
+                if ($user && $passwordOk) {
+                    // Password is correct, start session
+                    $_SESSION['user_id'] = $user['id'];
+                    $_SESSION['username'] = $user['username'] ?: ($user['email'] ?: $email);
+                    $_SESSION['role'] = $user['role'];
+
+                    // Regenerate session ID to prevent session fixation
+                    session_regenerate_id(true);
+
+                    if (($_SESSION['role'] ?? 'user') === 'admin') {
+                        header('Location: ../root/admin_hub.php');
+                        exit();
+                    }
+
+                    // Redirect to onboarding
+                    header('Location: ../root/onboarding.php');
+                    exit();
+                } else {
+                    $error = 'Ongeldig e-mailadres of wachtwoord.';
+                }
             }
         } catch (PDOException $e) {
             $error = 'Er is een fout opgetreden. Probeer het later opnieuw.';
@@ -73,8 +109,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
                 <form method="POST" action="" novalidate>
                     <div class="form-group">
-                        <label for="username">Gebruikersnaam:</label>
-                        <input id="username" name="username" type="text" value="<?php echo htmlspecialchars($username); ?>" required autofocus/>
+                        <label for="email">E-mail:</label>
+                        <input id="email" name="email" type="email" value="<?php echo htmlspecialchars($email); ?>" required autofocus/>
                     </div>
                     <div class="form-group">
                         <label for="password">Wachtwoord:</label>

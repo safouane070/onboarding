@@ -1,0 +1,40 @@
+.admin-nav {
+    background: #44205F;
+    color: #fff;
+    padding: 0.5rem 1rem;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    font-family: 'Poppins', sans-serif;
+    font-size: 0.9rem;
+}
+
+.admin-nav a {
+    color: #fff;
+    text-decoration: none;
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.3rem;
+    transition: background 0.2s;
+}
+
+.admin-nav a:hover,
+.admin-nav a.current {
+    background: rgba(255,255,255,0.2);
+}
+
+.admin-nav .brand {
+    font-weight: 600;
+    margin-right: auto;
+}
+
+@media (max-width: 600px) {
+    .admin-nav {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+    .admin-nav .brand {
+        margin-right: 0;
+    }
+}

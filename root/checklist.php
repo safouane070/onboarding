@@ -1,5 +1,16 @@
 <?php
+session_start();
 require_once __DIR__ . '/../includes/db.php';
+
+if (!isset($_SESSION['user_id'])) {
+    header('Location: ../auth/login.php');
+    exit();
+}
+
+if (($_SESSION['role'] ?? 'user') !== 'admin') {
+    header('Location: onboarding.php');
+    exit();
+}
 
 $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 
@@ -7,7 +18,7 @@ $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 $users = $pdo->query("
     SELECT id, username, email
     FROM users
-    ORDER BY username
+    ORDER BY COALESCE(username, email)
 ")->fetchAll(PDO::FETCH_ASSOC);
 
 $checklist = null;
@@ -50,39 +61,20 @@ if ($userId) {
     <meta charset="UTF-8">
     <title>Checklist beheren</title>
     <link rel="stylesheet" href="../assets/css/checklist.css">
+    <link rel="stylesheet" href="../assets/css/admin_nav.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
 <body class="page">
 
-<div class="tech-header">
-    <div class="nav">
-        <div class="nav-left">
-            <svg width="32" height="32" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" fill="#44205F" />
-            </svg>
-            <h1 class="brand">Onboarding</h1>
-        </div>
-
-        <!-- HAMBURGER BUTTON -->
-        <div class="hamburger" id="hamburger">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
-
-        <div class="nav-right">
-            <div class="avatar small photo" style="background-image: none;"></div>
-        </div>
-    </div>
-
-    <!-- MOBILE MENU -->
-    <div class="mobile-menu" id="mobileMenu">
-        <button id="closeMenu">Sluit</button>
-        <a href="#">Home</a>
-        <a href="#">Profiel</a>
-        <a href="#">Checklist</a>
-    </div>
-</div>
+<nav class="admin-nav">
+    <span class="brand">Admin</span>
+    <a href="admin_hub.php">Hub</a>
+    <a href="connect_emails.php">E-mails koppelen</a>
+    <a href="toewijzen.php">Toewijzen</a>
+    <a href="checklist.php" class="current">Checklist</a>
+    <a href="onboarding.php">Onboarding</a>
+    <a href="../auth/logout.php">Uitloggen</a>
+</nav>
 
 
 
@@ -116,7 +108,7 @@ if ($userId) {
                     data-id="<?= $u['id'] ?>"
                 >
                     <div>
-                        <strong><?= htmlspecialchars($u['username']) ?></strong><br>
+                        <strong><?= htmlspecialchars($u['username'] ?: ($u['email'] ?? '')) ?></strong><br>
                         <small><?= htmlspecialchars($u['email'] ?? '') ?></small>
                     </div>
                 </div>
