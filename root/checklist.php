@@ -2,76 +2,69 @@
 session_start();
 require_once __DIR__ . '/../includes/db.php';
 
+/* AUTHENTICATIE */
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
-    exit();
+    exit;
 }
-
 if (($_SESSION['role'] ?? 'user') !== 'admin') {
     header('Location: onboarding.php');
-    exit();
+    exit;
 }
 
+/* INPUT */
 $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
-// pages/checklist.php
-require_once __DIR__ . '/../includes/db.php';
 
-$userId = isset($_GET['user_id']) ? (int) $_GET['user_id'] : null;
-
-/* All users for the dropdown */
+/* GEBRUIKERS */
 $users = $pdo->query("
-    SELECT id, username, email
-    FROM users
+    SELECT id, username, email 
+    FROM users 
     ORDER BY COALESCE(username, email)
 ")->fetchAll(PDO::FETCH_ASSOC);
 
-/* Find first assigned checklist for user (preserve existing behaviour) */
 $checklist = null;
 $tasks = [];
 
 if ($userId) {
+    // Haal checklist voor deze gebruiker
     $stmt = $pdo->prepare("
-        SELECT c.id, c.title
+        SELECT c.id, c.title 
         FROM checklists c
-        JOIN checklist_assignments ca ON ca.checklist_id = c.id
+        INNER JOIN checklist_assignments ca ON ca.checklist_id = c.id
         WHERE ca.user_id = ?
         LIMIT 1
     ");
     $stmt->execute([$userId]);
-    $checklist = $stmt->fetch();
+    $checklist = $stmt->fetch(PDO::FETCH_ASSOC);
 
     if ($checklist) {
-        // If there are no user_tasks for this user+checklist, copy template items
-        $stmtCount = $pdo->prepare("
-            SELECT COUNT(*) AS cnt
-            FROM user_tasks
+        // Vul user_tasks als deze leeg is
+        $stmt = $pdo->prepare("
+            SELECT COUNT(*) 
+            FROM user_tasks 
             WHERE user_id = ? AND checklist_id = ?
         ");
-        $stmtCount->execute([$userId, $checklist['id']]);
-        $cnt = (int)$stmtCount->fetchColumn();
-
-        if ($cnt === 0) {
-            // Copy checklist_items (template) into user_tasks for this user
-            // We use a single INSERT SELECT to copy
-            $copyStmt = $pdo->prepare("
+        $stmt->execute([$userId, $checklist['id']]);
+        if ((int)$stmt->fetchColumn() === 0) {
+            $stmt = $pdo->prepare("
                 INSERT INTO user_tasks (user_id, checklist_id, title, sort_order, completed)
-                SELECT ?, ci.checklist_id, ci.title, COALESCE(ci.sort_order, 0), 0
-                FROM checklist_items ci
-                WHERE ci.checklist_id = ?
-                ORDER BY ci.sort_order
+                SELECT ?, checklist_id, title, COALESCE(sort_order,0), 0
+                FROM checklist_items
+                WHERE checklist_id = ?
+                ORDER BY sort_order
             ");
-            $copyStmt->execute([$userId, $checklist['id']]);
+            $stmt->execute([$userId, $checklist['id']]);
         }
 
-        // Now load the per-user tasks for display
+        // Haal taken op
         $stmt = $pdo->prepare("
-            SELECT id, title, sort_order, completed
-            FROM user_tasks
-            WHERE user_id = ? AND checklist_id = ?
+            SELECT id, title, completed 
+            FROM user_tasks 
+            WHERE user_id = ? AND checklist_id = ? 
             ORDER BY sort_order, id
         ");
         $stmt->execute([$userId, $checklist['id']]);
-        $tasks = $stmt->fetchAll();
+        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
     }
 }
 ?>
@@ -79,164 +72,74 @@ if ($userId) {
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <title>Checklist beheren</title>
-
+    <title>Checklist</title>
     <link rel="stylesheet" href="../assets/css/checklist.css">
     <link rel="stylesheet" href="../assets/css/admin_nav.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
-
 <body class="page">
-
 <nav class="admin-nav">
     <span class="brand">Admin</span>
     <a href="admin_hub.php">Hub</a>
-    <a href="connect_emails.php">E-mails koppelen</a>
     <a href="toewijzen.php">Toewijzen</a>
     <a href="checklist.php" class="current">Checklist</a>
-    <a href="afvinklijsten_beheren.php">Afvinklijsten</a>
-    <a href="onboarding.php">Onboarding</a>
-    <a href="../auth/logout.php" class="logout" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
+    <a href="../auth/logout.php">Uitloggen</a>
 </nav>
-
-<!-- Logout confirmation modal -->
-<div class="logout-modal" id="logoutModal">
-    <div class="logout-modal-content">
-        <h3>Uitloggen</h3>
-        <p>Weet je zeker dat je wilt uitloggen?</p>
-        <div class="logout-modal-buttons">
-            <button class="btn-cancel" onclick="closeLogoutModal()">Annuleren</button>
-            <button class="btn-confirm" onclick="confirmLogout()">Uitloggen</button>
-        </div>
-    </div>
-</div>
-
-<script>
-let logoutUrl = '';
-
-function showLogoutModal(event, url) {
-    event.preventDefault();
-    logoutUrl = url;
-    document.getElementById('logoutModal').classList.add('show');
-}
-
-function closeLogoutModal() {
-    document.getElementById('logoutModal').classList.remove('show');
-}
-
-function confirmLogout() {
-    window.location.href = logoutUrl;
-}
-</script>
-
-
-
-
-        <div class="nav-right">
-            <div class="avatar small photo" style="background-image: none;"></div>
-        </div>
-    </div>
-
-    <!-- MOBILE MENU -->
-    <div class="mobile-menu" id="mobileMenu">
-        <a href="#">Home</a>
-        <a href="#">Profiel</a>
-        <a href="#">Checklist</a>
-    </div>
-</div>
 
 <div class="layout">
     <main class="main">
-
-<!-- ================= TOP ================= -->
-<div class="top-bar">
-    <div class="title-block">
-        <h2>Toegewezen Afvinklijst</h2>
-        <p>Beheer taken per gebruiker</p>
-    </div>
-
-    <!-- ============ USER SEARCH (DROPDOWN) ============ -->
-    <div class="user-select">
-        <label for="user-search">Selecteer gebruiker</label>
-        <div class="input-wrapper">
-            <span class="material-symbols-outlined input-icon">search</span>
-            <input
-                id="user-search"
-                type="text"
-                placeholder="Zoek op naam of e-mail"
-                autocomplete="off"
-            >
-        </div>
-
-        <div class="dropdown" id="userDropdown">
-            <?php foreach ($users as $u): ?>
-                <div
-                    class="dropdown-item"
-                    data-id="<?= $u['id'] ?>"
-                >
-                    <div>
-                        <strong><?= htmlspecialchars($u['username'] ?: ($u['email'] ?? '')) ?></strong><br>
-                        <small><?= htmlspecialchars($u['email'] ?? '') ?></small>
-                    </div>
-                </div>
-            <?php endforeach; ?>
-        </div>
-    </div>
-</div>
-
-<!-- ================= TASKS ================= -->
-<section
-    class="task-section"
-    id="taskSection"
-    data-user-id="<?= $userId ?>"
-    data-checklist-id="<?= $checklist['id'] ?? '' ?>"
->
-
-<?php if (!$userId): ?>
-    <p>Selecteer eerst een gebruiker.</p>
-
-<?php elseif (!$checklist): ?>
-    <p>Deze gebruiker heeft nog geen checklist.</p>
-
-<?php else: ?>
-    <h3><?= htmlspecialchars($checklist['title']) ?></h3>
-
-    <div id="taskList">
-        <?php foreach ($tasks as $task): ?>
-            <div
-                class="task-item"
-                data-id="<?= $task['id'] ?>"
-            >
-                <span class="material-symbols-outlined drag-icon">drag_indicator</span>
-                <input
-                    type="checkbox"
-                    class="task-complete"
-                    <?= $task['completed'] ? 'checked' : '' ?>
-                >
-                <p class="task-title"><?= htmlspecialchars($task['title']) ?></p>
-                <button class="edit" title="Bewerken">
-                    <span class="material-symbols-outlined">edit</span>
-                </button>
-                <button class="delete" title="Verwijderen">
-                    <span class="material-symbols-outlined">delete</span>
-                </button>
+        <div class="top-bar">
+            <div class="title-block">
+                <h2>Checklist beheren</h2>
             </div>
-        <?php endforeach; ?>
-    </div>
+            <div class="user-select">
+                <div class="input-wrapper">
+                    <span class="material-symbols-outlined input-icon">search</span>
+                    <input id="user-search" placeholder="Zoek gebruiker" value="<?= $userId ? htmlspecialchars($users[array_search($userId, array_column($users, 'id'))]['username'] ?: $users[array_search($userId, array_column($users, 'id'))]['email']) : '' ?>">
+                </div>
+                <div class="dropdown" id="userDropdown">
+                    <?php foreach ($users as $u): ?>
+                        <div class="dropdown-item" data-id="<?= $u['id'] ?>">
+                            <?= htmlspecialchars($u['username'] ?: $u['email']) ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </div>
 
-    <button class="add-task-btn" id="addTaskBtn">
-        <span class="material-symbols-outlined">add</span>
-        Nieuwe taak
-    </button>
-
-<?php endif; ?>
-</section>
-
+        <section id="taskSection" class="task-section"
+                 data-user-id="<?= (int)$userId ?>"
+                 data-checklist-id="<?= (int)($checklist['id'] ?? 0) ?>">
+            <?php if (!$userId): ?>
+                <p>Selecteer een gebruiker</p>
+            <?php elseif (!$checklist): ?>
+                <p>Geen checklist toegewezen</p>
+            <?php else: ?>
+                <h3><?= htmlspecialchars($checklist['title']) ?></h3>
+                <div id="taskList">
+                    <?php foreach ($tasks as $task): ?>
+                        <div class="task-item" data-id="<?= $task['id'] ?>">
+                            <span class="material-symbols-outlined drag-icon">drag_indicator</span>
+                            <input type="checkbox" class="task-complete" <?= $task['completed'] ? 'checked' : '' ?>>
+                            <p class="task-title"><?= htmlspecialchars($task['title']) ?></p>
+                            <button class="edit" title="Bewerken">
+                                <span class="material-symbols-outlined">edit</span>
+                            </button>
+                            <button class="delete" title="Verwijderen">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+                <button class="add-task-btn" id="addTaskBtn">
+                    <span class="material-symbols-outlined">add</span>
+                    Nieuwe taak
+                </button>
+            <?php endif; ?>
+        </section>
     </main>
 </div>
 
 <script src="../assets/js/checklist.js"></script>
-<script src="../assets/js/menu.js"></script>
-
 </body>
 </html>
