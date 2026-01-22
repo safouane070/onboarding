@@ -40,7 +40,7 @@ main {
     border-radius: 0.5rem;
     box-shadow: 0 10px 25px rgba(0,0,0,0.1);
     padding: 3rem 2rem;
-    max-width: 400px;
+    max-width: 540px;
     width: 100%;
     text-align: center;
 }
@@ -60,21 +60,47 @@ main {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 500;
+    color: #374151;
 }
 
 .form-group input {
     width: 100%;
-    padding: 0.5rem 0.75rem;
+    max-width: 480px;
+    margin: 0 auto;
+    display: block;
+    padding: 0.75rem 1rem;
     border: 1px solid #d1d5db;
     border-radius: 0.5rem;
-    font-size: 0.9rem;
+    font-size: 0.95rem;
     transition: 0.2s;
+    background: #fff;
 }
 
 .form-group input:focus {
     outline: none;
     border-color: #99cc33;
-    box-shadow: 0 0 0 2px rgba(153,204,51,0.3);
+    box-shadow: 0 0 0 3px rgba(153,204,51,0.15);
+}
+
+.form-group textarea {
+    width: 100%;
+    max-width: 480px;
+    margin: 0 auto;
+    display: block;
+    padding: 0.75rem 1rem;
+    border: 1px solid #d1d5db;
+    border-radius: 0.5rem;
+    font-size: 0.95rem;
+    font-family: inherit;
+    transition: 0.2s;
+    resize: vertical;
+    background: #fff;
+}
+
+.form-group textarea:focus {
+    outline: none;
+    border-color: #99cc33;
+    box-shadow: 0 0 0 3px rgba(153,204,51,0.15);
 }
 
 /* Knop */

@@ -30,6 +30,7 @@ $percent = $total ? round($done/$total*100) : 0;
     <title>Onboarding Dashboard</title>
 
     <link rel="stylesheet" href="../assets/css/onboarding.css" />
+    <link rel="stylesheet" href="../assets/css/admin_nav.css" />
 </head>
 
 <body>
@@ -55,7 +56,7 @@ $percent = $total ? round($done/$total*100) : 0;
                 <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
                     <a href="connect_emails.php" class="logout-btn">E-mails koppelen</a>
                 <?php endif; ?>
-                <a href="../auth/logout.php" class="logout-btn">Uitloggen</a>
+                <a href="../auth/logout.php" class="logout-btn" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
             </div>
 
             <!-- Hamburger -->
@@ -72,7 +73,7 @@ $percent = $total ? round($done/$total*100) : 0;
             <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
                 <a href="connect_emails.php">E-mails koppelen</a>
             <?php endif; ?>
-            <a href="../auth/logout.php" class="mobile-logout">Uitloggen</a>
+            <a href="../auth/logout.php" class="mobile-logout" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
         </div>
     </header>
 
@@ -125,6 +126,36 @@ $percent = $total ? round($done/$total*100) : 0;
     </footer>
 
 </div>
+
+<!-- Logout confirmation modal -->
+<div class="logout-modal" id="logoutModal">
+    <div class="logout-modal-content">
+        <h3>Uitloggen</h3>
+        <p>Weet je zeker dat je wilt uitloggen?</p>
+        <div class="logout-modal-buttons">
+            <button class="btn-cancel" onclick="closeLogoutModal()">Annuleren</button>
+            <button class="btn-confirm" onclick="confirmLogout()">Uitloggen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let logoutUrl = '';
+
+function showLogoutModal(event, url) {
+    event.preventDefault();
+    logoutUrl = url;
+    document.getElementById('logoutModal').classList.add('show');
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').classList.remove('show');
+}
+
+function confirmLogout() {
+    window.location.href = logoutUrl;
+}
+</script>
 
 <script src="../assets/js/onboarding.js"></script>
 </body>
