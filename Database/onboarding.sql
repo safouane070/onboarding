@@ -3,9 +3,9 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Jan 22, 2026 at 10:52 AM
+-- Generation Time: Jan 22, 2026 at 01:24 PM
 -- Server version: 10.4.32-MariaDB
--- PHP Version: 8.2.12
+-- PHP Version: 8.0.30
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 START TRANSACTION;
@@ -63,6 +63,7 @@ INSERT INTO `checklist_assignments` (`user_id`, `checklist_id`) VALUES
 (1, 1),
 (5, 1),
 (6, 1),
+(6, 5),
 (7, 1);
 
 -- --------------------------------------------------------
@@ -144,6 +145,52 @@ INSERT INTO `users` (`id`, `username`, `email`, `password`, `role`, `created_at`
 (7, 'sdwqd', '595908@edu.rocmn.nl', '$2y$10$f1KJRT8rUxIDRWUQJOWOgu9eykppAfbB/ejQQKiUL2oWx1HCCP4ea', 'user', '2026-01-09 10:29:38'),
 (8, 'Chahid B', 'chahid30juni@gmail.com', '$2y$10$EmFiO8sLMwbBTeuxq/QTz.pOu1KcuxYSeBrPTo2BDl7qgfY20WN6C', 'user', '2026-01-12 13:36:52');
 
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `user_tasks`
+--
+
+CREATE TABLE `user_tasks` (
+  `id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `checklist_id` int(11) NOT NULL,
+  `title` varchar(255) NOT NULL,
+  `sort_order` int(11) NOT NULL DEFAULT 0,
+  `completed` tinyint(1) NOT NULL DEFAULT 0,
+  `created_at` timestamp NOT NULL DEFAULT current_timestamp()
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `user_tasks`
+--
+
+INSERT INTO `user_tasks` (`id`, `user_id`, `checklist_id`, `title`, `sort_order`, `completed`, `created_at`) VALUES
+(1, 6, 1, 'Gebruikersnaam kiezen', 1, 0, '2026-01-22 10:06:27'),
+(2, 6, 1, 'Wachtwoord', 2, 0, '2026-01-22 10:06:27'),
+(3, 6, 1, 'E-mailadres verifiëren', 3, 1, '2026-01-22 10:06:27'),
+(8, 6, 1, 'nieuwwwwwwwwwwwwwwwwww', 4, 0, '2026-01-22 10:29:09'),
+(10, 6, 1, 'mooi', 5, 0, '2026-01-22 10:36:23'),
+(11, 6, 1, 'niwuewed', 6, 0, '2026-01-22 10:37:18'),
+(12, 6, 1, 'keguvfjkhlasfdhjk.safbhjldb', 7, 0, '2026-01-22 10:37:49'),
+(13, 6, 1, 'wgw', 8, 0, '2026-01-22 10:38:16'),
+(14, 6, 5, 'Projectnaam invullen', 1, 0, '2026-01-22 11:43:32'),
+(15, 6, 5, 'Projectomschrijving toevoegen', 2, 0, '2026-01-22 11:43:32'),
+(16, 6, 5, 'Deadline instellen', 3, 0, '2026-01-22 11:43:32'),
+(17, 6, 5, 'Taken toevoegen', 4, 0, '2026-01-22 11:43:32'),
+(18, 6, 5, 'Project starten', 5, 0, '2026-01-22 11:43:32'),
+(21, 1, 1, 'Gebruikersnaam kiezen', 1, 0, '2026-01-22 11:53:06'),
+(22, 1, 1, 'Wachtwoord instellen', 2, 0, '2026-01-22 11:53:06'),
+(23, 1, 1, 'E-mailadres verifiëren', 3, 0, '2026-01-22 11:53:06'),
+(24, 1, 1, '', 999, 0, '2026-01-22 11:53:06'),
+(28, 5, 1, 'Gebruikersnaam kiezen', 1, 0, '2026-01-22 11:53:09'),
+(29, 5, 1, 'Wachtwoord instellen', 2, 0, '2026-01-22 11:53:09'),
+(30, 5, 1, 'E-mailadres verifiëren', 3, 0, '2026-01-22 11:53:09'),
+(31, 5, 1, '', 999, 0, '2026-01-22 11:53:09'),
+(35, 7, 1, 'Gebruikersnaam kiezen', 1, 0, '2026-01-22 11:53:13'),
+(36, 7, 1, 'Wachtwoord instellen', 2, 0, '2026-01-22 11:53:13'),
+(37, 7, 1, 'E-mailadres verifiëren\\\\;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;', 3, 0, '2026-01-22 11:53:13');
+
 --
 -- Indexes for dumped tables
 --
@@ -182,6 +229,14 @@ ALTER TABLE `users`
   ADD UNIQUE KEY `email` (`email`);
 
 --
+-- Indexes for table `user_tasks`
+--
+ALTER TABLE `user_tasks`
+  ADD PRIMARY KEY (`id`),
+  ADD UNIQUE KEY `uniq_user_task` (`user_id`,`checklist_id`,`title`),
+  ADD KEY `fk_user_tasks_checklist` (`checklist_id`);
+
+--
 -- AUTO_INCREMENT for dumped tables
 --
 
@@ -201,7 +256,13 @@ ALTER TABLE `checklist_items`
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=14;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+
+--
+-- AUTO_INCREMENT for table `user_tasks`
+--
+ALTER TABLE `user_tasks`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=43;
 
 --
 -- Constraints for dumped tables
@@ -212,6 +273,13 @@ ALTER TABLE `users`
 --
 ALTER TABLE `checklist_items`
   ADD CONSTRAINT `checklist_items_ibfk_1` FOREIGN KEY (`checklist_id`) REFERENCES `checklists` (`id`);
+
+--
+-- Constraints for table `user_tasks`
+--
+ALTER TABLE `user_tasks`
+  ADD CONSTRAINT `fk_user_tasks_checklist` FOREIGN KEY (`checklist_id`) REFERENCES `checklists` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `fk_user_tasks_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
