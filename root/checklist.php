@@ -13,18 +13,22 @@ if (($_SESSION['role'] ?? 'user') !== 'admin') {
 }
 
 $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
+// pages/checklist.php
+require_once __DIR__ . '/../includes/db.php';
 
-/* Alle users voor dropdown */
+$userId = isset($_GET['user_id']) ? (int) $_GET['user_id'] : null;
+
+/* All users for the dropdown */
 $users = $pdo->query("
     SELECT id, username, email
     FROM users
     ORDER BY COALESCE(username, email)
 ")->fetchAll(PDO::FETCH_ASSOC);
 
+/* Find first assigned checklist for user (preserve existing behaviour) */
 $checklist = null;
 $tasks = [];
 
-/* Checklist + taken van geselecteerde gebruiker */
 if ($userId) {
     $stmt = $pdo->prepare("
         SELECT c.id, c.title
@@ -34,24 +38,40 @@ if ($userId) {
         LIMIT 1
     ");
     $stmt->execute([$userId]);
-    $checklist = $stmt->fetch(PDO::FETCH_ASSOC);
+    $checklist = $stmt->fetch();
 
     if ($checklist) {
+        // If there are no user_tasks for this user+checklist, copy template items
+        $stmtCount = $pdo->prepare("
+            SELECT COUNT(*) AS cnt
+            FROM user_tasks
+            WHERE user_id = ? AND checklist_id = ?
+        ");
+        $stmtCount->execute([$userId, $checklist['id']]);
+        $cnt = (int)$stmtCount->fetchColumn();
+
+        if ($cnt === 0) {
+            // Copy checklist_items (template) into user_tasks for this user
+            // We use a single INSERT SELECT to copy
+            $copyStmt = $pdo->prepare("
+                INSERT INTO user_tasks (user_id, checklist_id, title, sort_order, completed)
+                SELECT ?, ci.checklist_id, ci.title, COALESCE(ci.sort_order, 0), 0
+                FROM checklist_items ci
+                WHERE ci.checklist_id = ?
+                ORDER BY ci.sort_order
+            ");
+            $copyStmt->execute([$userId, $checklist['id']]);
+        }
+
+        // Now load the per-user tasks for display
         $stmt = $pdo->prepare("
-            SELECT
-                ci.id,
-                ci.title,
-                ci.sort_order,
-                COALESCE(cp.completed, 0) AS completed
-            FROM checklist_items ci
-            LEFT JOIN checklist_progress cp
-                ON cp.checklist_item_id = ci.id
-               AND cp.user_id = ?
-            WHERE ci.checklist_id = ?
-            ORDER BY ci.sort_order
+            SELECT id, title, sort_order, completed
+            FROM user_tasks
+            WHERE user_id = ? AND checklist_id = ?
+            ORDER BY sort_order, id
         ");
         $stmt->execute([$userId, $checklist['id']]);
-        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        $tasks = $stmt->fetchAll();
     }
 }
 ?>
@@ -60,10 +80,12 @@ if ($userId) {
 <head>
     <meta charset="UTF-8">
     <title>Checklist beheren</title>
+
     <link rel="stylesheet" href="../assets/css/checklist.css">
     <link rel="stylesheet" href="../assets/css/admin_nav.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
+
 <body class="page">
 
 <nav class="admin-nav">
@@ -109,8 +131,22 @@ function confirmLogout() {
 
 
 
+
+        <div class="nav-right">
+            <div class="avatar small photo" style="background-image: none;"></div>
+        </div>
+    </div>
+
+    <!-- MOBILE MENU -->
+    <div class="mobile-menu" id="mobileMenu">
+        <a href="#">Home</a>
+        <a href="#">Profiel</a>
+        <a href="#">Checklist</a>
+    </div>
+</div>
+
 <div class="layout">
-<main class="main">
+    <main class="main">
 
 <!-- ================= TOP ================= -->
 <div class="top-bar">
@@ -192,13 +228,15 @@ function confirmLogout() {
         <span class="material-symbols-outlined">add</span>
         Nieuwe taak
     </button>
-<?php endif; ?>
 
+<?php endif; ?>
 </section>
-</main>
+
+    </main>
 </div>
 
 <script src="../assets/js/checklist.js"></script>
 <script src="../assets/js/menu.js"></script>
+
 </body>
 </html>

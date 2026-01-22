@@ -95,13 +95,14 @@ body.page {
     height: 40px;
 }
 
-/* HAMBURGER */
 .hamburger {
     display: none;
     flex-direction: column;
     gap: 5px;
     cursor: pointer;
+    margin-left: auto; /* 👈 duwt hamburger naar rechts */
 }
+
 
 .hamburger span {
     width: 26px;

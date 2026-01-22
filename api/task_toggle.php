@@ -1,14 +1,24 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
-$data = json_decode(file_get_contents("php://input"), true);
+header('Content-Type: application/json');
 
-$stmt = $pdo->prepare("
-    INSERT INTO checklist_progress (user_id, checklist_item_id, completed)
-    VALUES (?, ?, ?)
-    ON DUPLICATE KEY UPDATE completed=VALUES(completed)
-");
-$stmt->execute([
-    $data['user_id'],
-    $data['task_id'],
-    $data['completed']
-]);
+$data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid JSON']);
+    exit;
+}
+
+$id = isset($data['id']) ? (int)$data['id'] : 0;
+$completed = isset($data['completed']) ? (int)$data['completed'] : null;
+
+if (!$id || !in_array($completed, [0,1], true)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Ongeldige invoer']);
+    exit;
+}
+
+$stmt = $pdo->prepare("UPDATE user_tasks SET completed = ? WHERE id = ?");
+$stmt->execute([$completed, $id]);
+
+echo json_encode(['success' => true]);

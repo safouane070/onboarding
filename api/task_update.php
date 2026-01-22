@@ -1,6 +1,24 @@
 <?php
 require_once __DIR__ . '/../includes/db.php';
-$data = json_decode(file_get_contents("php://input"), true);
+header('Content-Type: application/json');
 
-$stmt = $pdo->prepare("UPDATE checklist_items SET title=? WHERE id=?");
-$stmt->execute([$data['title'], $data['id']]);
+$data = json_decode(file_get_contents('php://input'), true);
+if (!is_array($data)) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Invalid JSON']);
+    exit;
+}
+
+$id = isset($data['id']) ? (int)$data['id'] : 0;
+$title = isset($data['title']) ? trim($data['title']) : '';
+
+if (!$id || $title === '') {
+    http_response_code(400);
+    echo json_encode(['error' => 'Ongeldige invoer']);
+    exit;
+}
+
+$stmt = $pdo->prepare("UPDATE user_tasks SET title = ? WHERE id = ?");
+$stmt->execute([$title, $id]);
+
+echo json_encode(['success' => true]);
