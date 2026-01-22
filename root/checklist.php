@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/navigation.php';
 
 /* AUTHENTICATIE */
 if (!isset($_SESSION['user_id'])) {
@@ -17,8 +18,8 @@ $userId = isset($_GET['user_id']) ? (int)$_GET['user_id'] : null;
 
 /* GEBRUIKERS */
 $users = $pdo->query("
-    SELECT id, username, email 
-    FROM users 
+    SELECT id, username, email
+    FROM users
     ORDER BY COALESCE(username, email)
 ")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -28,7 +29,7 @@ $tasks = [];
 if ($userId) {
     // Haal checklist voor deze gebruiker
     $stmt = $pdo->prepare("
-        SELECT c.id, c.title 
+        SELECT c.id, c.title
         FROM checklists c
         INNER JOIN checklist_assignments ca ON ca.checklist_id = c.id
         WHERE ca.user_id = ?
@@ -40,8 +41,8 @@ if ($userId) {
     if ($checklist) {
         // Vul user_tasks als deze leeg is
         $stmt = $pdo->prepare("
-            SELECT COUNT(*) 
-            FROM user_tasks 
+            SELECT COUNT(*)
+            FROM user_tasks
             WHERE user_id = ? AND checklist_id = ?
         ");
         $stmt->execute([$userId, $checklist['id']]);
@@ -58,9 +59,9 @@ if ($userId) {
 
         // Haal taken op
         $stmt = $pdo->prepare("
-            SELECT id, title, completed 
-            FROM user_tasks 
-            WHERE user_id = ? AND checklist_id = ? 
+            SELECT id, title, completed
+            FROM user_tasks
+            WHERE user_id = ? AND checklist_id = ?
             ORDER BY sort_order, id
         ");
         $stmt->execute([$userId, $checklist['id']]);
@@ -78,14 +79,6 @@ if ($userId) {
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined" rel="stylesheet">
 </head>
 <body class="page">
-<nav class="admin-nav">
-    <span class="brand">Admin</span>
-    <a href="admin_hub.php">Hub</a>
-    <a href="toewijzen.php">Toewijzen</a>
-    <a href="checklist.php" class="current">Checklist</a>
-    <a href="../auth/logout.php">Uitloggen</a>
-</nav>
-
 <div class="layout">
     <main class="main">
         <div class="top-bar">
