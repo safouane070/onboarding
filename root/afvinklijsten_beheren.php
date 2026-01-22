@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../includes/db.php';
+require_once __DIR__ . '/../includes/navigation.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ../auth/login.php');
@@ -36,19 +37,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } catch (PDOException $e) {
             $errors[] = 'Fout bij verwijderen: ' . $e->getMessage();
         }
-    } elseif ($action === 'create' && $title) {
-        try {
-            $stmt = $pdo->prepare("INSERT INTO checklists (title, description) VALUES (?, ?)");
-            $stmt->execute([$title, $description]);
-            $success = 'Afvinklijst toegevoegd.';
-        } catch (PDOException $e) {
-            $errors[] = 'Fout bij toevoegen: ' . $e->getMessage();
-        }
     } elseif ($action === 'edit' && $id && $title) {
         try {
             $stmt = $pdo->prepare("UPDATE checklists SET title = ?, description = ? WHERE id = ?");
             $stmt->execute([$title, $description, $id]);
             $success = 'Afvinklijst bijgewerkt.';
+            header('Location: afvinklijsten_beheren.php?success=' . urlencode($success));
+            exit();
         } catch (PDOException $e) {
             $errors[] = 'Fout bij bewerken: ' . $e->getMessage();
         }
@@ -73,49 +68,8 @@ if (isset($_GET['edit'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 </head>
 <body>
-<nav class="admin-nav">
-    <span class="brand">Admin</span>
-    <a href="admin_hub.php">Hub</a>
-    <a href="connect_emails.php">E-mails koppelen</a>
-    <a href="toewijzen.php">Toewijzen</a>
-    <a href="checklist.php">Checklist</a>
-    <a href="afvinklijsten_beheren.php" class="current">Afvinklijsten</a>
-    <a href="onboarding.php">Onboarding</a>
-    <a href="../auth/logout.php" class="logout" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
-</nav>
-
-<!-- Logout confirmation modal -->
-<div class="logout-modal" id="logoutModal">
-    <div class="logout-modal-content">
-        <h3>Uitloggen</h3>
-        <p>Weet je zeker dat je wilt uitloggen?</p>
-        <div class="logout-modal-buttons">
-            <button class="btn-cancel" onclick="closeLogoutModal()">Annuleren</button>
-            <button class="btn-confirm" onclick="confirmLogout()">Uitloggen</button>
-        </div>
-    </div>
-</div>
-
-<script>
-let logoutUrl = '';
-
-function showLogoutModal(event, url) {
-    event.preventDefault();
-    logoutUrl = url;
-    document.getElementById('logoutModal').classList.add('show');
-}
-
-function closeLogoutModal() {
-    document.getElementById('logoutModal').classList.remove('show');
-}
-
-function confirmLogout() {
-    window.location.href = logoutUrl;
-}
-</script>
-
 <main>
-    <div class="login-box">
+    <div class="login-box" style="max-width: none; width: 95%; margin: 20px auto;">
         <h1>Afvinklijsten Beheren</h1>
 
         <?php if (!empty($errors)): ?>
@@ -135,31 +89,34 @@ function confirmLogout() {
         <?php if ($edit): ?>
             <h2 style="font-size:20px;margin:0 0 20px 0;color:#374151;">Afvinklijst bewerken</h2>
 
-            <form method="POST" action="" novalidate>
+            <form method="POST" action="" novalidate style="display: inline-block; background: white; padding: 24px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);">
                 <input type="hidden" name="action" value="edit">
                 <input type="hidden" name="id" value="<?= $edit['id'] ?>">
-                <div class="form-group">
-                    <label for="title">Titel</label>
-                    <input id="title" name="title" type="text" value="<?= htmlspecialchars($edit['title']) ?>" required>
+                <div style="margin-bottom: 12px;">
+                    <label for="title" style="display: block; margin-bottom: 4px; font-weight: 500; color: #374151;">Titel</label>
+                    <input id="title" name="title" type="text" value="<?= htmlspecialchars($edit['title']) ?>" required style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;">
                 </div>
-                <div class="form-group">
-                    <label for="description">Beschrijving</label>
-                    <textarea id="description" name="description" rows="3" placeholder="Optionele beschrijving"><?= htmlspecialchars($edit['description'] ?? '') ?></textarea>
+                <div style="margin-bottom: 12px;">
+                    <label for="description" style="display: block; margin-bottom: 4px; font-weight: 500; color: #374151;">Beschrijving</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Optionele beschrijving" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; resize: vertical;"><?= htmlspecialchars($edit['description']) ?></textarea>
                 </div>
-                <button type="submit">Bijwerken</button>
+                <div style="display: flex; gap: 12px;">
+                    <button type="submit" style="background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">Bijwerken</button>
+                    <button type="button" onclick="window.location.href='afvinklijsten_beheren.php'" style="background: linear-gradient(135deg, #6b7280 0%, #9ca3af 100%); color: white; padding: 12px 24px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; transition: all 0.2s ease;">Annuleren</button>
+                </div>
             </form>
         <?php else: ?>
             <h2 style="font-size:20px;margin:0 0 20px 0;color:#374151;">Nieuwe afvinklijst</h2>
 
             <form method="POST" action="" novalidate>
                 <input type="hidden" name="action" value="create">
-                <div class="form-group">
-                    <label for="title">Titel</label>
-                    <input id="title" name="title" type="text" placeholder="Nieuwe afvinklijst" required>
+                <div style="margin-bottom: 12px;">
+                    <label for="title" style="display: block; margin-bottom: 4px; font-weight: 500; color: #374151;">Titel</label>
+                    <input id="title" name="title" type="text" placeholder="Nieuwe afvinklijst" required style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px;">
                 </div>
-                <div class="form-group">
-                    <label for="description">Beschrijving</label>
-                    <textarea id="description" name="description" rows="3" placeholder="Optionele beschrijving"></textarea>
+                <div style="margin-bottom: 12px;">
+                    <label for="description" style="display: block; margin-bottom: 4px; font-weight: 500; color: #374151;">Beschrijving</label>
+                    <textarea id="description" name="description" rows="3" placeholder="Optionele beschrijving" style="width: 100%; padding: 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 16px; resize: vertical;"></textarea>
                 </div>
                 <button type="submit">Toevoegen</button>
             </form>
@@ -169,14 +126,14 @@ function confirmLogout() {
             <div style="margin-top:24px;">
                 <h2 style="font-size:18px;margin:0 0 16px 0;color:#374151;">Bestaande afvinklijsten</h2>
                 <?php foreach ($checklists as $list): ?>
-                    <div style="display:flex;align-items:center;justify-content:space-between;padding:16px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                    <div style="display:flex;align-items:center;justify-content:space-between;padding:20px;border:1px solid #e5e7eb;border-radius:8px;margin-bottom:12px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.05);">
                         <div>
                             <strong style="display:block;margin-bottom:4px;"><?= htmlspecialchars($list['title']) ?></strong>
                             <?php if ($list['description']): ?>
                                 <small style="color:#6b7280;"><?= htmlspecialchars($list['description']) ?></small>
                             <?php endif; ?>
                         </div>
-                        <div style="display:flex;gap:8px;">
+                        <div style="display:flex;gap:12px;">
                             <a href="?edit=<?= $list['id'] ?>" style="padding:8px 14px;font-size:0.85rem;background:#f3f4f6;color:#374151;text-decoration:none;border-radius:6px;transition:0.2s;">Bewerken</a>
                             <form method="POST" action="" style="display:inline;">
                                 <input type="hidden" name="action" value="delete">
