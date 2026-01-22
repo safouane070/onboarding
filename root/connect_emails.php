@@ -28,7 +28,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors[] = 'Vul minimaal één e-mailadres in.';
         } else {
             $inserted = 0;
-            $skipped = 0;
 
             try {
                 $stmt = $pdo->prepare("INSERT IGNORE INTO users (email, password, created_at) VALUES (?, '', NOW())");
@@ -44,12 +43,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     if ($stmt->rowCount() > 0) {
                         $inserted++;
                     } else {
-                        $skipped++;
+                        $errors[] = 'E-mail is al gekoppeld.';
                     }
                 }
 
                 if (empty($errors)) {
-                    $success = "E-mails gekoppeld: {$inserted}. Overgeslagen (bestond al): {$skipped}.";
+                    $success = "E-mails gekoppeld: {$inserted}.";
                 }
             } catch (PDOException $e) {
                 $errors[] = 'Databasefout: ' . $e->getMessage();
@@ -82,9 +81,40 @@ try {
     <a href="connect_emails.php" class="current">E-mails koppelen</a>
     <a href="toewijzen.php">Toewijzen</a>
     <a href="checklist.php">Checklist</a>
+    <a href="afvinklijsten_beheren.php">Afvinklijsten</a>
     <a href="onboarding.php">Onboarding</a>
-    <a href="../auth/logout.php">Uitloggen</a>
+    <a href="../auth/logout.php" class="logout" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
 </nav>
+
+<!-- Logout confirmation modal -->
+<div class="logout-modal" id="logoutModal">
+    <div class="logout-modal-content">
+        <h3>Uitloggen</h3>
+        <p>Weet je zeker dat je wilt uitloggen?</p>
+        <div class="logout-modal-buttons">
+            <button class="btn-cancel" onclick="closeLogoutModal()">Annuleren</button>
+            <button class="btn-confirm" onclick="confirmLogout()">Uitloggen</button>
+        </div>
+    </div>
+</div>
+
+<script>
+let logoutUrl = '';
+
+function showLogoutModal(event, url) {
+    event.preventDefault();
+    logoutUrl = url;
+    document.getElementById('logoutModal').classList.add('show');
+}
+
+function closeLogoutModal() {
+    document.getElementById('logoutModal').classList.remove('show');
+}
+
+function confirmLogout() {
+    window.location.href = logoutUrl;
+}
+</script>
 
     <main>
         <div class="login-box">
@@ -127,6 +157,6 @@ try {
         </div>
     </main>
 
-    
+
 </body>
 </html>
