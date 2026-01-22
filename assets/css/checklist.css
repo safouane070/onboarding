@@ -14,6 +14,37 @@ body.page {
 
 .material-symbols-outlined {
     font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 24;
+    font-family: 'Material Symbols Outlined', sans-serif;
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+    -moz-osx-font-smoothing: grayscale;
+    font-feature-settings: 'liga';
+}
+
+/* Fallback for when icons don't load */
+.material-symbols-outlined:not(:defined) {
+    color: transparent;
+    position: relative;
+}
+
+.material-symbols-outlined:not(:defined)::before {
+    content: attr(data-icon);
+    position: absolute;
+    left: 0;
+    top: 0;
+    color: inherit;
+    font-family: monospace;
+    font-size: 16px;
 }
 
 /* Colors */
@@ -311,15 +342,38 @@ body.page {
     border: none;
     background: transparent;
     cursor: pointer;
-    padding: 6px;
+    padding: 8px;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.task-item button:hover {
+    background: rgba(0, 0, 0, 0.05);
 }
 
 .task-item .edit {
     color: var(--techno-purple);
 }
 
+.task-item .edit:hover {
+    background: rgba(68, 32, 95, 0.1);
+    color: #35184c;
+}
+
 .task-item .delete {
     color: #dc2626;
+}
+
+.task-item .delete:hover {
+    background: rgba(220, 38, 38, 0.1);
+    color: #b91c1c;
+}
+
+.task-item .material-symbols-outlined {
+    font-size: 20px;
 }
 
 /* Add new task */

@@ -1,35 +1,4 @@
-// assets/js/checklist.js
 document.addEventListener('DOMContentLoaded', () => {
-  // USER DROPDOWN
-  const searchInput = document.getElementById('user-search');
-  const dropdown = document.getElementById('userDropdown');
-
-  if (searchInput && dropdown) {
-    const openDropdown = () => dropdown.classList.add('show');
-    const closeDropdown = () => dropdown.classList.remove('show');
-
-    searchInput.addEventListener('focus', openDropdown);
-    searchInput.addEventListener('input', () => {
-      const q = searchInput.value.toLowerCase();
-      dropdown.querySelectorAll('.dropdown-item').forEach(item => {
-        const text = item.innerText.toLowerCase();
-        item.style.display = text.includes(q) ? 'flex' : 'none';
-      });
-      openDropdown();
-    });
-
-    dropdown.addEventListener('click', e => {
-      const item = e.target.closest('.dropdown-item');
-      if (!item) return;
-      window.location = `checklist.php?user_id=${item.dataset.id}`;
-    });
-
-    document.addEventListener('click', e => {
-      if (!e.target.closest('.user-select')) closeDropdown();
-    });
-  }
-
-  // TASK CRUD
   const taskSection = document.getElementById('taskSection');
   if (!taskSection) return;
 
@@ -37,7 +6,54 @@ document.addEventListener('DOMContentLoaded', () => {
   const checklistId = taskSection.dataset.checklistId;
   const taskList = document.getElementById('taskList');
 
-  // ADD TASK
+  /* ===== USER SELECTION ===== */
+  const userSearch = document.getElementById('user-search');
+  const userDropdown = document.getElementById('userDropdown');
+  
+  if (userSearch && userDropdown) {
+    // Show dropdown when input is focused
+    userSearch.addEventListener('focus', () => {
+      userDropdown.classList.add('show');
+    });
+
+    // Filter users when typing
+    userSearch.addEventListener('input', (e) => {
+      const searchTerm = e.target.value.toLowerCase();
+      const items = userDropdown.querySelectorAll('.dropdown-item');
+      
+      items.forEach(item => {
+        const text = item.textContent.toLowerCase();
+        item.style.display = text.includes(searchTerm) ? 'flex' : 'none';
+      });
+    });
+
+    // Handle user selection
+    userDropdown.addEventListener('click', (e) => {
+      const item = e.target.closest('.dropdown-item');
+      if (item) {
+        const selectedUserId = item.dataset.id;
+        const userName = item.textContent.trim();
+        
+        // Update input field
+        userSearch.value = userName;
+        
+        // Hide dropdown
+        userDropdown.classList.remove('show');
+        
+        // Redirect to checklist page with selected user
+        window.location.href = `checklist.php?user_id=${selectedUserId}`;
+      }
+    });
+
+    // Hide dropdown when clicking outside
+    document.addEventListener('click', (e) => {
+      if (!userSearch.contains(e.target) && !userDropdown.contains(e.target)) {
+        userDropdown.classList.remove('show');
+      }
+    });
+  }
+
+  /* ===== ADD TASK ===== */
   const addBtn = document.getElementById('addTaskBtn');
   if (addBtn) {
     addBtn.addEventListener('click', () => {
@@ -65,32 +81,22 @@ document.addEventListener('DOMContentLoaded', () => {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ user_id: userId, checklist_id: checklistId, title })
           });
-          const text = await res.text();
-          let data;
-          try {
-            data = JSON.parse(text);
-          } catch (e) {
-            console.error('Server returned non-JSON:', text);
-            alert('Serverfout bij opslaan (zie console).');
-            return;
-          }
+          const data = await res.json();
+          if (!data.success) return alert(data.error || 'Fout bij opslaan');
 
-          if (!data.id) {
-            alert(data.error || 'Fout bij opslaan');
-            return;
-          }
-
-          // Replace row with new task
           row.classList.remove('new');
           row.dataset.id = data.id;
           row.innerHTML = `
             <span class="material-symbols-outlined drag-icon">drag_indicator</span>
             <input type="checkbox" class="task-complete">
             <p class="task-title">${escapeHtml(title)}</p>
-            <button class="edit" title="Bewerken"><span class="material-symbols-outlined">edit</span></button>
-            <button class="delete" title="Verwijderen"><span class="material-symbols-outlined">delete</span></button>
+            <button class="edit" title="Bewerken">
+              <span class="material-symbols-outlined">edit</span>
+            </button>
+            <button class="delete" title="Verwijderen">
+              <span class="material-symbols-outlined">delete</span>
+            </button>
           `;
-
         } catch (err) {
           console.error(err);
           alert('Netwerkfout bij opslaan');
@@ -101,7 +107,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
-  // EDIT / DELETE
+  /* ===== EDIT / DELETE ===== */
   taskSection.addEventListener('click', async e => {
     const task = e.target.closest('.task-item');
     if (!task) return;
@@ -113,7 +119,7 @@ document.addEventListener('DOMContentLoaded', () => {
       try {
         const res = await fetch('../api/task_delete.php', {
           method: 'POST',
-          headers: {'Content-Type': 'application/json'},
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: taskId })
         });
         const data = await res.json();
@@ -128,15 +134,14 @@ document.addEventListener('DOMContentLoaded', () => {
     // EDIT
     if (e.target.closest('.edit')) {
       const p = task.querySelector('p.task-title');
-      const currentText = p.innerText;
+      const oldText = p.innerText;
       if (task.querySelector('.task-input')) return;
 
       const input = document.createElement('input');
       input.type = 'text';
       input.className = 'task-input';
-      input.value = currentText;
+      input.value = oldText;
       p.replaceWith(input);
-      input.focus();
 
       const saveBtn = document.createElement('button');
       saveBtn.className = 'save';
@@ -154,7 +159,7 @@ document.addEventListener('DOMContentLoaded', () => {
         try {
           const res = await fetch('../api/task_update.php', {
             method: 'POST',
-            headers: {'Content-Type': 'application/json'},
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ id: taskId, title: newTitle })
           });
           const data = await res.json();
@@ -177,7 +182,7 @@ document.addEventListener('DOMContentLoaded', () => {
       cancelBtn.onclick = () => {
         const pOld = document.createElement('p');
         pOld.className = 'task-title';
-        pOld.innerText = currentText;
+        pOld.innerText = oldText;
         input.replaceWith(pOld);
         saveBtn.remove();
         cancelBtn.remove();
@@ -185,10 +190,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   });
 
-  // TOGGLE COMPLETED
+  /* ===== TOGGLE COMPLETED ===== */
   taskSection.addEventListener('change', async e => {
+    if (!e.target.classList.contains('task-complete')) return;
     const task = e.target.closest('.task-item');
-    if (!task || !e.target.classList.contains('task-complete')) return;
+    if (!task) return;
 
     const taskId = task.dataset.id;
     const completed = e.target.checked ? 1 : 0;
@@ -196,32 +202,28 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const res = await fetch('../api/task_toggle.php', {
         method: 'POST',
-        headers: {'Content-Type': 'application/json'},
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: taskId, completed })
       });
       const data = await res.json();
-      if (!data.success) {
-        alert(data.error || 'Fout bij updaten');
-      }
+      if (!data.success) alert(data.error || 'Fout bij updaten');
     } catch (err) {
       console.error(err);
       alert('Netwerkfout bij updaten');
     }
   });
 
-  // simple helper to prevent XSS when inserting text nodes
+  /* ===== HELPERS ===== */
   function escapeHtml(text) {
-    return text.replace(/[&<>"'`=\/]/g, function (s) {
-      return ({
-        '&': '&amp;',
-        '<': '&lt;',
-        '>': '&gt;',
-        '"': '&quot;',
-        "'": '&#39;',
-        '/': '&#x2F;',
-        '`': '&#x60;',
-        '=': '&#x3D;'
-      })[s];
-    });
+    return text.replace(/[&<>"'`=\/]/g, s => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#39;',
+      '/': '&#x2F;',
+      '`': '&#x60;',
+      '=': '&#x3D;'
+    }[s]));
   }
 });
