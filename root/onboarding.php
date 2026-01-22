@@ -44,17 +44,15 @@ $percent = $total ? round($done/$total*100) : 0;
         <nav class="nav">
 
             <div class="nav-left">
-                <svg width="32" height="32" xmlns="http://www.w3.org/2000/svg">
-                    <path d="M4 4H18.6667V10.6667H12V28H4V4Z" fill="#44205F"></path>
-                    <path d="M21.3333 21.3333H28V28H21.3333V21.3333Z" fill="#44205F"></path>
-                </svg>
-                <span class="brand">TechnoLab Leiden</span>
+                <img src="../images/logo.jpg">
+
+               
             </div>
 
             <div class="nav-right desktop-only">
                 <span class="welcome">Welkom, <?php echo htmlspecialchars($_SESSION['username'] ?? 'Gebruiker'); ?>!</span>
                 <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
-                    <a href="connect_emails.php" class="logout-btn">E-mails koppelen</a>
+                    <a href="admin_hub.php" class="logout-btn">Admin Hub</a>
                 <?php endif; ?>
                 <a href="../auth/logout.php" class="logout-btn" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
             </div>
@@ -71,7 +69,7 @@ $percent = $total ? round($done/$total*100) : 0;
             <a href="onboarding.php">Onboarding</a>
             <a href="toewijzen.php">Toewijzen</a>
             <?php if (($_SESSION['role'] ?? 'user') === 'admin'): ?>
-                <a href="connect_emails.php">E-mails koppelen</a>
+                <a href="admin_hub.php">Admin Hub</a>
             <?php endif; ?>
             <a href="../auth/logout.php" class="mobile-logout" onclick="showLogoutModal(event, '../auth/logout.php')">Uitloggen</a>
         </div>
