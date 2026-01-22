@@ -22,6 +22,7 @@ body {
 
 .nav {
     max-width: 1100px;
+    max-height: 40px;
     margin: auto;
     padding: 18px 20px;
     display: flex;
@@ -34,6 +35,13 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+.nav-left img {
+    width: 340px;
+    height: 60px;
+    border-radius: 8px;
+    object-fit: cover;
 }
 
 .brand {
